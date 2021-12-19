@@ -1,43 +1,42 @@
-import React, { useState } from 'react';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import Container from './components/Container/Container';
 import ContactForm from './components/ContactForm/ContactForm';
 import Filter from './components/Filter/Filter';
 import ContactList from './components/ContactList/ContactList';
 import {
-  useFetchContactsQuery,
-  useDeleteContactsMutation,
-  useCreateContactsMutation,
-} from './redux/contacts/contacts-slice';
+  fetchContacts,
+  deleteContacts,
+  createContacts,
+} from './redux/contacts/contacts-operations';
+import contactsActions from '../src/redux/contacts/contacts-actions';
+import {
+  getContactsFiltered,
+  getFilter,
+} from '../src/redux/contacts/contacts-selectors';
 
 function App() {
-  const [createContacts] = useCreateContactsMutation();
-  const { data: contacts, isFetching } = useFetchContactsQuery();
-  const [deleteContacts] = useDeleteContactsMutation();
-  const [filter, setFilter] = useState('');
+  const contacts = useSelector(getContactsFiltered);
+  const filter = useSelector(getFilter);
+  const dispatch = useDispatch();
+
+  useEffect(() => dispatch(fetchContacts()), [dispatch]);
 
   const addContact = (name, number) => {
     const dublicate = contacts.some(c => c.name === name);
     if (dublicate) {
       return alert(`${name} is already in contacts.`);
     }
-    createContacts({ name, number });
+    dispatch(createContacts({ name, number }));
   };
 
-  const changeFilter = e => setFilter(e.currentTarget.value);
-
-  const filteredContacts = () => {
-    if (isFetching) return contacts;
-    const normalizedFilter = filter.toLowerCase();
-    const filteredContacts = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normalizedFilter),
-    );
-    return filteredContacts;
-  };
-  const filteredData = filteredContacts();
+  const changeFilter = e =>
+    dispatch(contactsActions.changeFilter(e.currentTarget.value));
 
   const deleteContact = id => {
-    contacts.filter(contact => contact.id !== id);
-    deleteContacts(id);
+    dispatch(deleteContacts(id)).then(() => {
+      dispatch(fetchContacts());
+    });
   };
 
   return (
@@ -46,7 +45,7 @@ function App() {
       <ContactForm onSubmit={addContact} />
       <h2>Contacts</h2>
       <Filter value={filter} onChange={changeFilter} />
-      <ContactList contacts={filteredData} deleteContact={deleteContact} />
+      <ContactList contacts={contacts} deleteContact={deleteContact} />
     </Container>
   );
 }

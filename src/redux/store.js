@@ -1,13 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { contactsApi } from './contacts/contacts-slice';
+import contactsReducer from './contacts/contacts-reducer';
 
 export const store = configureStore({
   reducer: {
-    [contactsApi.reducerPath]: contactsApi.reducer,
+    contacts: contactsReducer,
   },
   devTools: process.env.NODE_ENV === 'development',
-  middleware: getDefaultMiddleware => [
-    ...getDefaultMiddleware(),
-    contactsApi.middleware,
-  ],
+  middleware: getDefaultMiddleware => [...getDefaultMiddleware()],
 });
